@@ -10,12 +10,12 @@ use sea_orm::{ActiveModelTrait, ActiveValue, EntityTrait, Set, TransactionTrait}
 
 use super::dto::{CreateTodoRequest, UpdateTodoRequest};
 
-pub async fn todos_index(State(state): State<Arc<AppState>>) -> ApiResult<impl IntoResponse> {
+pub async fn index(State(state): State<Arc<AppState>>) -> ApiResult<impl IntoResponse> {
     let todos = Todo::find().all(&state.db).await.unwrap();
     Ok(Json(todos))
 }
 
-pub async fn todos_create(
+pub async fn create(
     State(state): State<Arc<AppState>>,
     ValidatedRequest(payload): ValidatedRequest<CreateTodoRequest>,
 ) -> ApiResult<impl IntoResponse> {
@@ -34,7 +34,7 @@ pub async fn todos_create(
 }
 
 // https://www.sea-ql.org/SeaORM/docs/basic-crud/update/
-pub async fn todos_update(
+pub async fn update(
     State(state): State<Arc<AppState>>,
     ValidatedRequest(payload): ValidatedRequest<UpdateTodoRequest>,
 ) -> ApiResult<impl IntoResponse> {
@@ -50,7 +50,7 @@ pub async fn todos_update(
 }
 
 // https://www.sea-ql.org/SeaORM/docs/basic-crud/delete/
-pub async fn todos_delete(State(state): State<Arc<AppState>>) -> ApiResult<impl IntoResponse> {
+pub async fn delete(State(state): State<Arc<AppState>>) -> ApiResult<impl IntoResponse> {
     let response = Todo::delete_by_id(1).exec(&state.db).await.unwrap();
     if response.rows_affected == 0 {
         return Ok(StatusCode::NOT_FOUND);

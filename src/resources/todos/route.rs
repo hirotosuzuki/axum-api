@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::resources::todos::handler::{todos_create, todos_delete, todos_index, todos_update};
+use crate::resources::todos::handler::{create, delete, index, update};
 use crate::AppState;
 use axum::{
     routing::{get, patch},
@@ -9,6 +9,6 @@ use axum::{
 
 pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
-        .route("/todos", get(todos_index).post(todos_create))
-        .route("/todos/:id", patch(todos_update).delete(todos_delete))
+        .route("/todos", get(index).post(create))
+        .route("/todos/:id", patch(update).delete(delete))
 }
