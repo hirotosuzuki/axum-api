@@ -2,6 +2,7 @@
     "recommendations": [
         "rust-lang.rust-analyzer",
         "alexcvzz.vscode-sqlite",
-        "seaql.firedbg-rust"
+        "seaql.firedbg-rust",
+        "vadimcn.vscode-lldb"
     ]
 }
