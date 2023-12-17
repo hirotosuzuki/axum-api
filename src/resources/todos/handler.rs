@@ -2,47 +2,58 @@ use std::sync::Arc;
 
 use crate::{
     entities::prelude::{Todo, TodoActiveModel},
+    errors::{api_error::ApiResult, http_request::ValidatedRequest},
     AppState,
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
-use sea_orm::{ActiveModelTrait, ActiveValue, EntityTrait, Set};
+use sea_orm::{ActiveModelTrait, ActiveValue, EntityTrait, Set, TransactionTrait};
 
-pub async fn todos_index(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+use super::dto::{CreateTodoRequest, UpdateTodoRequest};
+
+pub async fn todos_index(State(state): State<Arc<AppState>>) -> ApiResult<impl IntoResponse> {
     let todos = Todo::find().all(&state.db).await.unwrap();
-    Json(todos)
+    Ok(Json(todos))
 }
 
 pub async fn todos_create(
     State(state): State<Arc<AppState>>,
-) -> Result<impl IntoResponse, StatusCode> {
+    ValidatedRequest(payload): ValidatedRequest<CreateTodoRequest>,
+) -> ApiResult<impl IntoResponse> {
+    let transaction = state.db.begin().await?;
+
     let todo = TodoActiveModel {
         id: ActiveValue::NotSet,
-        name: ActiveValue::Set("created todo".to_owned()),
-    };
-    todo.insert(&state.db).await.unwrap();
-    Ok(StatusCode::CREATED)
+        name: ActiveValue::Set(payload.name),
+    }
+    .insert(&transaction)
+    .await?;
+
+    transaction.commit().await?;
+
+    Ok(Json(todo))
 }
 
 // https://www.sea-ql.org/SeaORM/docs/basic-crud/update/
 pub async fn todos_update(
     State(state): State<Arc<AppState>>,
-) -> Result<impl IntoResponse, StatusCode> {
+    ValidatedRequest(payload): ValidatedRequest<UpdateTodoRequest>,
+) -> ApiResult<impl IntoResponse> {
     let mut target: TodoActiveModel = Todo::find_by_id(2)
         .one(&state.db)
         .await
         .unwrap()
         .unwrap()
         .into();
-    target.name = Set("updated todo".to_owned());
+    target.name = Set(payload.name);
     let todo = target.update(&state.db).await.unwrap();
     Ok(Json(todo))
 }
 
 // https://www.sea-ql.org/SeaORM/docs/basic-crud/delete/
-pub async fn todos_delete(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+pub async fn todos_delete(State(state): State<Arc<AppState>>) -> ApiResult<impl IntoResponse> {
     let response = Todo::delete_by_id(1).exec(&state.db).await.unwrap();
     if response.rows_affected == 0 {
-        return StatusCode::NOT_FOUND;
+        return Ok(StatusCode::NOT_FOUND);
     }
-    StatusCode::NO_CONTENT
+    Ok(StatusCode::NO_CONTENT)
 }

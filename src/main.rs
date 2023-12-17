@@ -1,4 +1,5 @@
 mod entities;
+mod errors;
 mod resources;
 
 use std::sync::Arc;
@@ -13,7 +14,7 @@ async fn main() {
     let state = Arc::new(AppState { db });
 
     // curl localhost:3000/api/v1/todos | jq .
-    // curl -X POST localhost:3000/api/v1/todos | jq .
+    // curl -X POST localhost:3000/api/v1/todos -H "Content-Type: application/json" -d '{"name": "sample"}' | jq .
     // curl -X PATCH localhost:3000/api/v1/todos/1 | jq .
     // curl -X DELETE localhost:3000/api/v1/todos/1 | jq .
     let api = Router::new()
@@ -27,6 +28,6 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-struct AppState {
+pub struct AppState {
     db: DatabaseConnection,
 }
