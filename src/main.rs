@@ -1,12 +1,15 @@
 mod entities;
 mod errors;
+mod middleware;
 mod resources;
 
 use std::sync::Arc;
 
 use crate::resources::todos;
 use axum::Router;
+use middleware::cors::cors_layer;
 use sea_orm::{Database, DatabaseConnection};
+use tower::ServiceBuilder;
 
 #[tokio::main]
 async fn main() {
@@ -21,7 +24,9 @@ async fn main() {
         .merge(todos::route::routes())
         .with_state(state);
 
-    let app = Router::new().nest("/api/v1", api);
+    let app = Router::new()
+        .nest("/api/v1", api)
+        .layer(ServiceBuilder::new().layer(cors_layer()));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
 
