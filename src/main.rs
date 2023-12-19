@@ -7,7 +7,11 @@ use std::sync::Arc;
 
 use crate::resources::todos;
 use axum::Router;
-use middleware::{cors::create_cors_layer, trace::create_trace_layer};
+use middleware::{
+    cors::create_cors_layer,
+    request_id::{create_propagate_request_id_layer, create_request_id_layer},
+    trace::create_trace_layer,
+};
 use sea_orm::{Database, DatabaseConnection};
 use tower::ServiceBuilder;
 
@@ -31,11 +35,13 @@ async fn main() {
     let app = Router::new().nest("/api/v1", api).layer(
         // https://docs.rs/axum/latest/axum/middleware/index.html#ordering
         ServiceBuilder::new()
+            .layer(create_request_id_layer())
             .layer(create_trace_layer())
+            .layer(create_propagate_request_id_layer())
             .layer(create_cors_layer()),
     );
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3003").await.unwrap();
 
     axum::serve(listener, app).await.unwrap();
 }
